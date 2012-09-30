@@ -1,0 +1,36 @@
+## generic files to ignore
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
+*.swo
+
+## Python specific
+*.pyc
+*.pyo
+
+## Configurations and util directories
+/.idea/
+/logs/
+
+## Project specific
+local_settings.py
+*/_generated_media/
+*/media/_production
+*/media/admin_media
+
+## Sqlite databses
+*.sqlite
+
+## Buildout specific
+.installed.cfg
+.mr.developer.cfg
+bin
+develop-eggs
+dist
+downloads
+eggs
+parts
+src/*.egg-info
+/var/

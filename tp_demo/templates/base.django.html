@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tastypie demo</title>
+    <link type="text/css" href="{{ STATIC_URL }}bootstrap/css/bootstrap.css" rel="stylesheet"/>
+    <link type="text/css" href="{{ STATIC_URL }}js/backbone-forms/backbone-forms.css" rel="stylesheet"/>
+    <link type="text/css" href="{{ STATIC_URL }}css/poll.css" rel="stylesheet"/>
+    <style>
+        body {
+            padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+        }
+    </style>
+</head>
+<body>
+<div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <a class="brand" href="#">Tastypie Polls</a>
+        </div>
+    </div>
+</div>
+
+<div id="main_container" class="container">
+
+    <h1>Tastypie polls</h1>
+    <p>Select a poll or create a new one.</p>
+
+    <div id="poll_container" class="container row-fluid"></div>
+
+</div> <!-- /container -->
+</body>
+<script type="text/javascript">
+    var poll_settings = {
+        url_poll: '/api/v1/poll/',
+        url_choice: '/api/v2/choice/'
+    };
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.min.js" ></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui.min.js" ></script>
+<script type="text/javascript" src="{{ STATIC_URL }}bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/underscore.js" ></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/backbone.js" ></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/backbone-forms/backbone-forms.js" ></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/backbone-forms/jquery-ui-editors.js" ></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/backbone-tastypie/backbone-tastypie.js" ></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/polls.js" ></script>
+</html>

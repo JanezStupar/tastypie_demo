@@ -1,0 +1,13 @@
+div.poll_choice div.form_content {
+    display: inline-block;
+    width: 70%;
+}
+
+div.poll_choice div.button {
+    display: inline-block;
+    margin-left: 5%;
+ }
+
+div#poll_container button {
+    margin-left: 5px;
+}
