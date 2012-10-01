@@ -26,14 +26,16 @@
     <p>Select a poll or create a new one.</p>
 
     <div id="poll_container" class="container row-fluid"></div>
+    <div id="poll_form" class="container row-fluid"></div>
 
 </div> <!-- /container -->
 </body>
 <script type="text/javascript">
     var poll_settings = {
-        url_poll: '/api/v1/poll/',
-        url_choice: '/api/v2/choice/'
+        url_poll: '/api/polls/poll_resource/',
+        url_choice: '/api/polls/choice_resource/'
     };
+    var poll_app = {};
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.min.js" ></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui.min.js" ></script>

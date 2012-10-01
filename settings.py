@@ -104,6 +104,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'tp_demo',
+    'tastypie',
     )
 
 # Absolute path to the directory static files should be collected to.

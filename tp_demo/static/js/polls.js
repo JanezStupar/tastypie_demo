@@ -6,16 +6,20 @@
  * To change this template use File | Settings | File Templates.
  */
 
+// This is here only to get Pycharm code analysis tool off my back
 var poll_settings=poll_settings;
+var poll_app = poll_app;
 
 $(document).ready(function(){
-    var app = new PollApp();
-    app.render();
+    poll_app = new PollApp();
+    poll_app.render();
 });
 
 var Poll = Backbone.Model.extend({
     initialize: function(){
-        this.choices = new Backbone.Collection([],{model: Choice})
+        if (! this.get('choices')){
+            this.set('choices', new ChoiceCollection());
+        }
     },
     schema: {
         question: {type: 'Text'}
@@ -25,60 +29,82 @@ var Poll = Backbone.Model.extend({
         pub_date: new Date()
     },
     url: function(){
-        return poll_settings.url_poll;
+        if (this.id){
+            return this.id;
+        }else{
+            return poll_settings.url_poll;
+        }
+    },
+    parse: function(response){
+        if (response.choices){
+            response.choices = new ChoiceCollection(response.choices);
+        }
+        return response;
     }
 });
 
 var Choice = Backbone.Model.extend({
+    initialize: function(){
+        this.bind('change', function(){
+            // Ignore save when model is first initialized
+            if (this.get('poll') && this.get('choice')!=""){
+                // ignore save when only resource_uri is changed (AKA after model is created)
+                if(!this.changed.resource_uri){
+                    this.save();
+                }
+            }
+        },this);
+    },
    schema: {
        choice: {type: 'Text'}
    },
     defaults: {
         choice: "",
         votes: 0
+    },
+    url: function(){
+        if (this.id){
+            return this.id;
+        }else{
+            return poll_settings.url_choice;
+        }
     }
 });
 
-var PollList = Backbone.View.extend({
-    el: 'div#poll_container',
-    initialize: function(){
-        _.bindAll(this,'render');
-        this.poll_collection = new Backbone.Collection();
-    },
-    render: function(){
-        this.table = $('<table class="table table_hover"><tr><th>Poll</th></tr><thead></thead></table>');
-        this.$el.append(this.table);
-
-        return this;
-    }
- });
 
 var PollForm = Backbone.View.extend({
-    el: 'div#poll_container',
+    el: 'div#poll_form',
     initialize: function (){
         _.bindAll(this,'render', 'add_choice', 'confirm_poll','item_add_remove','remove');
-        this.model.choices.bind('add', this.item_add_remove);
-        this.model.choices.bind('remove', this.item_add_remove);
+        this.model.get('choices').bind('add', this.item_add_remove);
+        this.model.get('choices').bind('remove', this.item_add_remove);
         this.model.bind('close_poll_form', this.remove);
+        this.choice_form_collection = new Backbone.Collection();
     },
     events: {
         'click .container button#add_choice': 'add_choice',
-        'click .container button#confirm_poll': 'confirm_poll'
+        'click .container button#confirm_poll': 'confirm_poll',
+        'click .container button#close_form': 'remove'
     },
     render: function(){
         this.container = $('<div class="span8"></div>');
         this.$el.append(this.container);
+
+        this.container.append('<h2>Add new poll</h2>');
+
         this.form = new Backbone.Form({model: this.model});
         this.form.render();
         this.container.append(this.form.$el);
 
         this.add_choice_btn = $('<button id="add_choice" class="btn btn-primary">Add choice</button>');
-        this.confirm = $('<button id="confirm_poll" class="btn btn-success">Confirm poll</button>');
+        this.confirm_btn = $('<button id="confirm_poll" class="btn btn-success">Confirm poll</button>');
+        this.close_btn = $('<button id="close_form" class="btn btn-danger">Close</button>');
 
         this.container.append(this.add_choice_btn);
-        this.container.append(this.confirm);
+        this.container.append(this.close_btn);
+        this.container.append(this.confirm_btn);
 
-        this.confirm.toggle();
+        this.confirm_btn.toggle();
 
         return this;
     },
@@ -86,24 +112,39 @@ var PollForm = Backbone.View.extend({
         var new_choice = new Choice();
         var choice_form = new ChoiceForm({model: new_choice}).render();
         this.$el.append(choice_form.$el);
-        this.model.choices.add(new_choice);
+        this.model.get('choices').add(new_choice);
+        this.choice_form_collection.add(choice_form);
     },
     confirm_poll: function(){
-        this.model.save();
+        var self = this;
+        this.form.commit();
+        this.model.save({},{
+            success: function(model, response){
+                self.choice_form_collection.each(function(e,i){
+                    if (!e.get('model').get('poll')) {
+                        e.get('model').set('poll',model.id);
+                    }
+                    e.get('form').commit();
+                });
+            }
+        });
+        this.remove();
     },
     item_add_remove: function(model, collection){
         if (collection.length>1){
-           this.confirm.show();
+           this.confirm_btn.show();
             this.add_choice_btn.removeClass('btn-primary');
         }
         else{
-            this.confirm.hide();
+            this.confirm_btn.hide()
             this.add_choice_btn.addClass('btn-primary');
         }
 
     },
     remove: function (){
+        this.trigger('closing');
         this.model.destroy();
+        this.undelegateEvents();
         this.unbind();
         this.$el.html('');
     }
@@ -135,23 +176,128 @@ var ChoiceForm = Backbone.View.extend({
     }
 });
 
+var PollCollection = Backbone.Collection.extend({
+    url: function(){
+        return poll_settings.url_poll;
+    },
+    model: Poll
+});
+
+var ChoiceCollection = Backbone.Collection.extend({
+    url: function(){
+        return poll_settings.url_choic;
+    },
+    model: Choice
+});
+
 var PollApp = Backbone.View.extend({
     el: 'body div#main_container',
     initialize: function (){
         _.bindAll(this,'render','add_poll_click');
+        this.poll_collection = new PollCollection();
     },
     events: {'click button#add_poll': 'add_poll_click'},
     render: function(){
-        var p_list = new PollList({});
+        var self = this;
+        var p_list = new PollEditor({poll_collection: this.poll_collection});
         p_list.render();
 
         this.add_poll = $('<button id="add_poll" class="btn btn-primary">Add Poll</button>');
         this.$el.append(this.add_poll);
+        this.poll_collection.fetch({success: function(collection,response){
+            p_list.trigger('init_polls');
+        }});
     },
     add_poll_click: function(){
         var poll_instance = new Poll({});
-        var form = new PollForm({model:poll_instance});
+        var form = new PollForm({model:poll_instance, poll_collection: this.poll_collection});
+        form.bind('closing',function(){
+            this.add_poll.toggle();
+            this.poll_collection.add(poll_instance);
+        },this);
         form.render();
         this.add_poll.toggle();
+    }
+});
+
+var PollEditor = Backbone.View.extend({
+    el: 'div#poll_container',
+    initialize: function(){
+        _.bindAll(this,'render','poll_added','poll_removed','init_polls');
+        this.poll_collection = this.options.poll_collection;
+        this.options.poll_collection.bind('add', this.poll_added);
+        this.options.poll_collection.bind('remove',this.poll_removed);
+        this.bind('init_polls', this.init_polls);
+    },
+    render: function(){
+        this.table = $('<table class="table table-hover"><thead><tr><th>Poll</th></tr></thead><tbody></tbody></table>');
+        this.$el.append(this.table);
+
+        this.table_content = $('div#poll_container table tbody');
+
+        return this;
+    },
+    poll_added: function(model, collection){
+        var new_entry = new PollListEntry({model: model});
+        new_entry.render();
+        this.table_content.append(new_entry.$el);
+    },
+    poll_removed: function(model, collection){
+
+    },
+    init_polls: function (){
+        this.poll_collection.each(function(e,i){
+            this.poll_added(e);
+        },this);
+    }
+});
+
+var PollListEntry = Backbone.View.extend({
+    el: '<tr class="poll_list_entry"></tr>',
+    initialize: function(){
+        _.bindAll(this,'render','remove_model','toggle_mode');
+        this.mode = 0; // row
+    },
+    events: {
+        'click td>button.remove_poll': 'remove_model',
+        'click td': 'toggle_mode'
+    },
+    render: function(){
+        if (this.mode==0){
+            this.content = $('<td class="col1">'+ this.model.get('question') +'</td><td class="col2"><button class="remove_poll btn btn-danger">Remove</button></td>');
+        }else{
+            var choices = this.model.get('choices');
+            if (!choices.length) {
+                this.model.fetch({success: function(model,collection){
+                    choices = model.get('choices');
+                },wait:true});
+            }
+            var choice_container  = $('<td><div>' + this.model.get("question") +'</div><div class="poll_choice_container"><ul class="unstyled"></ul></div></td><td><div class="poll_choice_vote"><ul class="unstyled"></ul></div></td>');
+            choices.each(function(e,i){
+                var choice = $('<li><button class="btn">Vote</button><span>' + e.get('choice') + '</span></li></br>');
+                var votes = $('<li>Current votes: ' + e.get('votes') + '</li></br>');
+                choice.children('button').bind('click',function(){
+                    e.set('votes', e.get('votes')+1);
+                });
+                choice.appendTo(choice_container.find('div.poll_choice_container ul'));
+                votes.appendTo(choice_container.find('div.poll_choice_vote ul'));
+            });
+            this.content = choice_container;
+        }
+        this.$el.append(this.content);
+
+        return this;
+    },
+    rerender: function(){
+        this.content.remove();
+        this.render();
+    },
+    remove_model: function(){
+        this.model.destroy();
+        this.remove();
+    },
+    toggle_mode: function(){
+        this.mode = this.mode ^ 1;
+        this.rerender();
     }
 });

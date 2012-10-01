@@ -3,6 +3,10 @@ div.poll_choice div.form_content {
     width: 70%;
 }
 
+div#poll_form div.span8 button {
+    margin-left:10px;
+}
+
 div.poll_choice div.button {
     display: inline-block;
     margin-left: 5%;
@@ -10,4 +14,27 @@ div.poll_choice div.button {
 
 div#poll_container button {
     margin-left: 5px;
+}
+
+button.remove_poll {
+    float: right;
+}
+
+td.col1 {
+    width: 80%;
+}
+
+td.col2 {
+     width: 20%;
+ }
+
+div.poll_choice_container ul li, div.poll_choice_vote ul li{
+    height: 20px;
+}
+
+div.poll_choice_container ul li span{
+    margin-left: 50px;
+}
+div.poll_choice_vote ul li{
+    padding-top: 5px;
 }
