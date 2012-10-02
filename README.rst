@@ -21,5 +21,6 @@ General information
 -------------------
 
 Following tools have been used:
+
 * [backbone-forms](https://github.com/powmedia/backbone-forms) for form generation.
 * [backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie) for coupling Backbone models to Tastypie services.
