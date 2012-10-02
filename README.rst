@@ -11,7 +11,7 @@ Setup
 
 We assume that you are using virtualenv:
 ::
-    git clone ..
+    git clone git://github.com/JanezStupar/tastypie_demo.git
     cd tastypie_demo
     pip install < requirements.txt
 
